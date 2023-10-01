@@ -1,0 +1,12 @@
+{
+  "domain": "limodor_airodor",
+  "name": "LIMODOR AirOdor AD-UV integration",
+  "codeowners": [
+    "@jschroeter"
+  ],
+  "config_flow": true,
+  "documentation": "https://github.com/jschroeter/HomeAssistant-Limodor-AirOdor",
+  "iot_class": "cloud_polling",
+  "issue_tracker": "https://github.com/jschroeter/HomeAssistant-Limodor-AirOdor/issues",
+  "version": "0.0.0"
+}
