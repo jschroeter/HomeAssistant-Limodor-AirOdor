@@ -13,6 +13,7 @@ _Integration to control multiple [AirOdor][limodor_airodor] home ventilation fan
 
 - use serial device from config
 - error handling
+- improve code, e.g. reduce repetitions
 
 **This integration will set up the following platforms.**
 
@@ -22,10 +23,13 @@ _Integration to control multiple [AirOdor][limodor_airodor] home ventilation fan
 
 ## Installation
 
-1. Add this repository to HACS by clicking the following button
+1. Connect [AirOdor AD-UV][limodor_airodor_ad_uv] via a USB serial dongle to your HA machine (see [AD-UV manual][limodor_airodor_ad_uv_manual])
+2. Add this repository to HACS by clicking the following button
+
    [![Open this repository in HACS][hacsbadge]][hacs_my]
-2. Restart Home Assistant
-3. In the HA UI go to "Configuration" -> "Integrations" click "+" and search for "LIMODOR AirOdor"
+3. Click "download"
+4. Restart Home Assistant
+5. In the HA UI go to "Configuration" -> "Integrations" click "+" and search for "LIMODOR AirOdor"
 
 ## Configuration is done in the UI
 
@@ -40,6 +44,7 @@ If you want to contribute to this please read the [Contribution guidelines](CONT
 [integration_repo]: https://github.com/jschroeter/HomeAssistant-Limodor-AirOdor
 [limodor_airodor]: https://limot.de/de/produkte/?category=24&id=328
 [limodor_airodor_ad_uv]: https://limot.de/de/produkte/?category=20&id=368
+[limodor_airodor_ad_uv_manual]: https://limot.de/tn-misc/download.php?index=1&lng=de&folder=products&type=*&id=892&t=_blank
 [commits-shield]: https://img.shields.io/github/commit-activity/y/jschroeter/HomeAssistant-Limodor-AirOdor.svg?style=for-the-badge
 [commits]: https://github.com/jschroeter/HomeAssistant-Limodor-AirOdor/commits/main
 [hacs_my]: https://my.home-assistant.io/redirect/hacs_repository/?owner=jschroeter&repository=HomeAssistant-Limodor-AirOdor&category=integration
