@@ -1,10 +1,12 @@
 """Platform for light integration."""
 from __future__ import annotations
+from typing import Any
 
 import serial
 
 from homeassistant.components.fan import FanEntity, FanEntityFeature
 from homeassistant.core import HomeAssistant
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 
@@ -46,7 +48,7 @@ class AirOdorFan(FanEntity):
         return self._unique_id
 
     @property
-    def percentage(self) -> Optional[int]:
+    def percentage(self) -> int | None:
         """Return the current speed percentage."""
         return self._percentage
 
@@ -166,7 +168,7 @@ class AirOdorFan(FanEntity):
     def turn_on(
         self,
         percentage: int | None = None,
-        preset_mode: Optional[str] = None,
+        preset_mode: str | None = None,
         **kwargs: Any,
     ) -> None:
         """Turn on the fan."""

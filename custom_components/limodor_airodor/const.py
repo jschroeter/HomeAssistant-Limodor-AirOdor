@@ -26,9 +26,11 @@ def binary_to_mode_and_percentage(binary_command):
         return {"preset_mode": PRESET_MODES[0], "percentage": 0}
 
     index = None
-    for preset_mode, speeds in BINARY_COMMAND_MAP.items():
+    preset_mode = None
+    for current_preset_mode, speeds in BINARY_COMMAND_MAP.items():
         try:
             index = speeds.index(binary_command)
+            preset_mode = current_preset_mode
             break
         except ValueError:
             pass
