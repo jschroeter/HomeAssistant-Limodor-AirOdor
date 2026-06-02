@@ -167,6 +167,14 @@ class AirOdorFan(FanEntity):
         LOGGER.info("AirOdorFan send_serial_command successful")
         return True
 
+    def _refresh_state_after_failed_command(self, operation: str) -> None:
+        """Refresh the entity state after a failed write command."""
+        LOGGER.info(
+            "AirOdorFan %s failed. Refreshing state from device.",
+            operation,
+        )
+        self.update()
+
     def update(self) -> None:
         """Poll current state of the device and updates HA state."""
         response = self._send_command(STATUS_COMMAND, "update")
@@ -197,7 +205,7 @@ class AirOdorFan(FanEntity):
             self.schedule_update_ha_state()
             return
 
-        self.update()
+        self._refresh_state_after_failed_command("set_percentage")
 
     @property
     def preset_mode(self) -> str | None:
@@ -212,7 +220,7 @@ class AirOdorFan(FanEntity):
     def set_preset_mode(self, preset_mode: str) -> None:
         """Set new preset mode."""
         if self.preset_modes and preset_mode in self.preset_modes:
-            if not self._percentage:
+            if self._percentage is None or self._percentage == 0:
                 self._preset_mode = preset_mode
                 self.schedule_update_ha_state()
                 return
@@ -222,7 +230,7 @@ class AirOdorFan(FanEntity):
                 self.schedule_update_ha_state()
                 return
 
-            self.update()
+            self._refresh_state_after_failed_command("set_preset_mode")
         else:
             raise ValueError(f"Invalid preset mode: {preset_mode}")
 
