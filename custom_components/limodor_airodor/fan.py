@@ -117,7 +117,6 @@ class AirOdorFan(FanEntity):
     def _has_valid_response(self, response: bytes | None, operation: str) -> bool:
         """Validate the response returned by the device."""
         if response is None or len(response) <= SERIAL_RESPONSE_INDEX:
-            self._attr_available = False
             LOGGER.warning(
                 "AirOdorFan %s failed. Device response too short: %s",
                 operation,
