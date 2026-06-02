@@ -212,6 +212,7 @@ class AirOdorFan(FanEntity):
             operation,
         )
         self.update()
+        self.schedule_update_ha_state()
 
     def update(self) -> None:
         """Poll current state of the device and updates HA state."""
@@ -243,7 +244,11 @@ class AirOdorFan(FanEntity):
         """Set the speed of the fan, as a percentage. AirOdor only supports 40, 55 and 100%."""
         value = self._normalize_percentage(percentage)
         if self.send_serial_command(value, self._preset_mode):
-            self._percentage = value
+            # Read back the applied state from the device so UI reflects device truth.
+            self.update()
+            # Fallback to optimistic local value if the immediate readback failed.
+            if self._percentage is None:
+                self._percentage = value
             self.schedule_update_ha_state()
             return
 
@@ -271,7 +276,11 @@ class AirOdorFan(FanEntity):
                 return
 
             if self.send_serial_command(self._percentage, preset_mode):
-                self._preset_mode = preset_mode
+                # Read back the applied state from the device so UI reflects device truth.
+                self.update()
+                # Fallback to optimistic local value if the immediate readback failed.
+                if self._preset_mode is None:
+                    self._preset_mode = preset_mode
                 self.schedule_update_ha_state()
                 return
 
