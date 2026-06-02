@@ -7,11 +7,8 @@
 ![Project Maintenance][maintenance-shield]
 [![Community Forum][forum-shield]][forum]
 
-_Integration to control multiple [AirOdor][limodor_airodor] home ventilation fans via the control unit [AirOdor AD-UV][limodor_airodor_ad_uv] from the company LIMODOR/LIMOT._
+_Integration to control one or multiple [LIMODOR/LIMOT AirOdor][limodor_airodor] home ventilation fans via the control unit [AirOdor AD-UV][limodor_airodor_ad_uv]. The control unit needs to be reachable via a serial connection._
 
-**STILL WORK IN PROGRESS**
-
-Initial serial communication error handling and command refactoring are in place, but the integration is still evolving.
 
 **This integration will set up the following platforms.**
 
