@@ -11,7 +11,6 @@ _Integration to control multiple [AirOdor][limodor_airodor] home ventilation fan
 
 **STILL WORK IN PROGRESS**
 
-- use serial device from config
 - error handling
 - improve code, e.g. reduce repetitions
 
