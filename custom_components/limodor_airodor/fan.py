@@ -100,13 +100,26 @@ class AirOdorFan(FanEntity):
             read_timeout=1,
         )
 
-    def _send_command(self, values: bytearray, operation: str, response_length: int = SERIAL_RESPONSE_LENGTH_STATUS) -> bytes | None:
+    def _send_command(
+        self,
+        values: bytearray,
+        operation: str,
+        response_length: int = SERIAL_RESPONSE_LENGTH_STATUS,
+    ) -> bytes | None:
         """Send a command to the device and return the raw response."""
         try:
             with self._open_serial_connection() as ser:
                 ser.readall()  # flush any stale bytes before sending
                 ser.write(values)
                 response = ser.read(response_length)
+                if len(response) < response_length:
+                    LOGGER.debug(
+                        "AirOdorFan %s short response (%d/%d bytes), retrying once",
+                        operation,
+                        len(response),
+                        response_length,
+                    )
+                    response += ser.read(response_length - len(response))
         except (OSError, serialx.SerialException) as err:
             self._attr_available = False
             LOGGER.warning(
@@ -182,6 +195,13 @@ class AirOdorFan(FanEntity):
             return False
 
         self._attr_available = True
+        LOGGER.debug(
+            "AirOdorFan send_serial_command decoded write: command=0x%02X preset_mode=%s percentage=%s response_len=%d",
+            binary_command,
+            preset_mode,
+            percentage,
+            len(response),
+        )
         LOGGER.info("AirOdorFan send_serial_command successful")
         return True
 
@@ -199,15 +219,22 @@ class AirOdorFan(FanEntity):
         if not self._has_valid_response(response, "update"):
             return
 
-        mode_and_percentage = binary_to_mode_and_percentage(response[SERIAL_RESPONSE_INDEX])
+        response_command = response[SERIAL_RESPONSE_INDEX]
+        mode_and_percentage = binary_to_mode_and_percentage(response_command)
         if mode_and_percentage is None:
             self._attr_available = False
             LOGGER.warning(
                 "AirOdorFan update failed. Unknown device response command: %s",
-                response[SERIAL_RESPONSE_INDEX],
+                response_command,
             )
             return
 
+        LOGGER.debug(
+            "AirOdorFan update decoded state: command=0x%02X preset_mode=%s percentage=%s",
+            response_command,
+            mode_and_percentage["preset_mode"],
+            mode_and_percentage["percentage"],
+        )
         self._percentage = mode_and_percentage["percentage"]
         self._preset_mode = mode_and_percentage["preset_mode"]
         self._attr_available = True
