@@ -142,8 +142,22 @@ class AirOdorFan(FanEntity):
         """Build the command used to set fan speed and mode."""
         return bytearray([0x02, 0x05, 0x16, 0x00, binary_command, binary_command, 0x11])
 
-    def send_serial_command(self, percentage: int, preset_mode: str) -> bool:
+    def send_serial_command(
+        self,
+        percentage: int | None = None,
+        preset_mode: str | None = None,
+    ) -> bool:
         """Set the speed of the fan, as a percentage."""
+        if percentage is None:
+            percentage = self._percentage
+        if preset_mode is None:
+            preset_mode = self._preset_mode
+        if percentage is None:
+            LOGGER.warning(
+                "AirOdorFan send_serial_command failed. Missing fan percentage."
+            )
+            return False
+
         binary_command = mode_and_percentage_to_binary(preset_mode, percentage)
         response = self._send_command(
             self._build_set_command(binary_command),
