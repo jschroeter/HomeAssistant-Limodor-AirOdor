@@ -4,8 +4,8 @@ from __future__ import annotations
 from typing import Any
 
 import serialx
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.components.fan import FanEntity, FanEntityFeature
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
@@ -103,7 +103,7 @@ class AirOdorFan(FanEntity):
             with self._open_serial_connection() as ser:
                 ser.write(values)
                 response = ser.read(SERIAL_RESPONSE_LENGTH)
-        except (OSError, TimeoutError, serialx.SerialException) as err:
+        except (OSError, serialx.SerialException) as err:
             self._attr_available = False
             LOGGER.warning(
                 "AirOdorFan %s failed. Serial communication error: %s",
@@ -221,6 +221,9 @@ class AirOdorFan(FanEntity):
         """Set new preset mode."""
         if self.preset_modes and preset_mode in self.preset_modes:
             if self._percentage is None or self._percentage == 0:
+                LOGGER.info(
+                    "AirOdorFan set_preset_mode while off. Preset will apply on the next speed change."
+                )
                 self._preset_mode = preset_mode
                 self.schedule_update_ha_state()
                 return
