@@ -28,7 +28,7 @@ async def async_setup_platform(
     discovery_info: DiscoveryInfoType | None = None,
 ) -> None:
     """Platform setup."""
-    async_add_entities([AirOdorFan()])
+    async_add_entities([AirOdorFan("/dev/ttyUSB0")])
 
 
 async def async_setup_entry(
@@ -64,7 +64,7 @@ class AirOdorFan(FanEntity):
         """Return true if the entity is on."""
         return self._percentage is not None and self._percentage > 0
 
-    def __init__(self, serial_device: str = "/dev/ttyUSB0") -> None:
+    def __init__(self, serial_device: str) -> None:
         """Init the AirOdorFan."""
         self._serial_device = serial_device
         self._unique_id = "fan"
