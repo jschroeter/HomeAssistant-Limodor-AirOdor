@@ -138,6 +138,11 @@ class AirOdorFan(FanEntity):
                 self._percentage = mode_and_percentage["percentage"]
                 self._preset_mode = mode_and_percentage["preset_mode"]
                 self.schedule_update_ha_state()
+            else:
+                LOGGER.warning(
+                    "AirOdorFan update failed. Unknown device response command: %s",
+                    response[4],
+                )
         else:
             LOGGER.warning("AirOdorFan update failed. Device response too short: %s", response)
 
