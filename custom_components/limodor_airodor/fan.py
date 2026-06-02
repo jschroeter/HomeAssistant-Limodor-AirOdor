@@ -11,6 +11,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 
 from .const import (
+    CONF_SERIAL_DEVICE,
     LOGGER,
     PRESET_MODES,
     binary_to_mode_and_percentage,
@@ -36,7 +37,8 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Entry setup."""
-    await async_setup_platform(hass, {}, async_add_entities)
+    serial_device = config_entry.data[CONF_SERIAL_DEVICE]
+    async_add_entities([AirOdorFan(serial_device)])
 
 
 class AirOdorFan(FanEntity):
@@ -62,8 +64,9 @@ class AirOdorFan(FanEntity):
         """Return true if the entity is on."""
         return self._percentage is not None and self._percentage > 0
 
-    def __init__(self) -> None:
+    def __init__(self, serial_device: str = "/dev/ttyUSB0") -> None:
         """Init the AirOdorFan."""
+        self._serial_device = serial_device
         self._unique_id = "fan"
         self._attr_name = "LIMODOR AirOdor"
         self._attr_translation_key = "limodor_airodor"
@@ -92,7 +95,7 @@ class AirOdorFan(FanEntity):
             [0x02, 0x05, 0x16, 0x00, binary_command, binary_command, 0x11]
         )
         with serialx.serial_for_url(
-            "/dev/ttyUSB0",
+            self._serial_device,
             baudrate=9600,
             byte_size=8,
             parity=serialx.Parity.NONE,
@@ -123,7 +126,7 @@ class AirOdorFan(FanEntity):
         """Poll current state of the device and updates HA state."""
         values = bytearray([0x02, 0x02, 0x96, 0x96])
         with serialx.serial_for_url(
-            "/dev/ttyUSB0",
+            self._serial_device,
             baudrate=9600,
             byte_size=8,
             parity=serialx.Parity.NONE,
