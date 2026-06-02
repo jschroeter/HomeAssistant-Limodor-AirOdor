@@ -67,7 +67,10 @@ class AirOdorFan(FanEntity):
         self._unique_id = "fan"
         self._attr_name = "LIMODOR AirOdor"
         self._attr_supported_features = (
-            FanEntityFeature.SET_SPEED | FanEntityFeature.PRESET_MODE
+            FanEntityFeature.SET_SPEED
+            | FanEntityFeature.PRESET_MODE
+            | FanEntityFeature.TURN_ON
+            | FanEntityFeature.TURN_OFF
         )
         self._percentage: int | None = None
         self._current_named_speed: str | None = None
@@ -98,13 +101,19 @@ class AirOdorFan(FanEntity):
             ser.write(values)
             response = ser.read(11)
 
+        if response is None or len(response) <= 4:
+            LOGGER.warning(
+                "AirOdorFan send_serial_command failed. Device response too short: %s",
+                response,
+            )
+            return
+
         response_command = response[4]
         if response_command != binary_command:
             LOGGER.warning(
-                "AirOdorFan send_serial_command failed. Got "
-                + response_command
-                + ", expected "
-                + binary_command
+                "AirOdorFan send_serial_command failed. Got %s, expected %s",
+                response_command,
+                binary_command,
             )
         else:
             LOGGER.info("AirOdorFan send_serial_command successful")
@@ -123,11 +132,14 @@ class AirOdorFan(FanEntity):
             ser.write(values)
             response = ser.read(11)
 
-        if response is not None:
+        if response is not None and len(response) > 4:
             mode_and_percentage = binary_to_mode_and_percentage(response[4])
-            self._percentage = mode_and_percentage["percentage"]
-            self._preset_mode = mode_and_percentage["preset_mode"]
-            self.schedule_update_ha_state()
+            if mode_and_percentage is not None:
+                self._percentage = mode_and_percentage["percentage"]
+                self._preset_mode = mode_and_percentage["preset_mode"]
+                self.schedule_update_ha_state()
+        else:
+            LOGGER.warning("AirOdorFan update failed. Device response too short: %s", response)
 
     def set_percentage(self, percentage: int) -> None:
         """Set the speed of the fan, as a percentage. AirOdor only supports 40, 55 and 100%."""
