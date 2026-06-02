@@ -20,7 +20,10 @@ from .const import (
 
 ORDERED_NAMED_FAN_SPEEDS = ["quiet", "normal", "max"]  # off is not included
 SERIAL_RESPONSE_INDEX = 4
-SERIAL_RESPONSE_LENGTH = 11
+# STATUS returns 9 bytes (fan off) or 11 bytes (fan on); read the minimum reliable length.
+SERIAL_RESPONSE_LENGTH_STATUS = 9
+# SET commands are echoed back as exactly 7 bytes.
+SERIAL_RESPONSE_LENGTH_SET = 7
 STATUS_COMMAND = bytearray([0x02, 0x02, 0x96, 0x96])
 
 
@@ -97,12 +100,13 @@ class AirOdorFan(FanEntity):
             read_timeout=1,
         )
 
-    def _send_command(self, values: bytearray, operation: str) -> bytes | None:
+    def _send_command(self, values: bytearray, operation: str, response_length: int = SERIAL_RESPONSE_LENGTH_STATUS) -> bytes | None:
         """Send a command to the device and return the raw response."""
         try:
             with self._open_serial_connection() as ser:
+                ser.readall()  # flush any stale bytes before sending
                 ser.write(values)
-                response = ser.read(SERIAL_RESPONSE_LENGTH)
+                response = ser.read(response_length)
         except (OSError, serialx.SerialException) as err:
             self._attr_available = False
             LOGGER.warning(
@@ -161,6 +165,7 @@ class AirOdorFan(FanEntity):
         response = self._send_command(
             self._build_set_command(binary_command),
             "send_serial_command",
+            SERIAL_RESPONSE_LENGTH_SET,
         )
 
         if not self._has_valid_response(response, "send_serial_command"):
@@ -192,7 +197,6 @@ class AirOdorFan(FanEntity):
         """Poll current state of the device and updates HA state."""
         response = self._send_command(STATUS_COMMAND, "update")
         if not self._has_valid_response(response, "update"):
-            self.schedule_update_ha_state()
             return
 
         mode_and_percentage = binary_to_mode_and_percentage(response[SERIAL_RESPONSE_INDEX])
@@ -202,13 +206,11 @@ class AirOdorFan(FanEntity):
                 "AirOdorFan update failed. Unknown device response command: %s",
                 response[SERIAL_RESPONSE_INDEX],
             )
-            self.schedule_update_ha_state()
             return
 
         self._percentage = mode_and_percentage["percentage"]
         self._preset_mode = mode_and_percentage["preset_mode"]
         self._attr_available = True
-        self.schedule_update_ha_state()
 
     def set_percentage(self, percentage: int) -> None:
         """Set the speed of the fan, as a percentage. AirOdor only supports 40, 55 and 100%."""
