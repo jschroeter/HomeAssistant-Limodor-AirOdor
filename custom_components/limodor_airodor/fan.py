@@ -1,6 +1,8 @@
 """Platform for fan integration."""
 from __future__ import annotations
 
+import hashlib
+from time import monotonic, sleep
 from typing import Any
 
 import serialx
@@ -24,6 +26,10 @@ SERIAL_RESPONSE_INDEX = 4
 SERIAL_RESPONSE_LENGTH_STATUS = 9
 # SET commands are echoed back as exactly 7 bytes.
 SERIAL_RESPONSE_LENGTH_SET = 7
+# Give the device a brief moment before starting reads after a write.
+SERIAL_POST_WRITE_DELAY_SECONDS = 0.05
+# Total time budget for collecting a full response frame.
+SERIAL_READ_DEADLINE_SECONDS = 3.0
 STATUS_COMMAND = bytearray([0x02, 0x02, 0x96, 0x96])
 
 
@@ -75,7 +81,8 @@ class AirOdorFan(FanEntity):
     def __init__(self, serial_device: str) -> None:
         """Init the AirOdorFan."""
         self._serial_device = serial_device
-        self._unique_id = "fan"
+        device_hash = hashlib.sha1(serial_device.encode("utf-8")).hexdigest()[:12]
+        self._unique_id = f"fan_{device_hash}"
         self._attr_name = "LIMODOR AirOdor"
         self._attr_translation_key = "limodor_airodor"
         self._attr_supported_features = (
@@ -111,15 +118,23 @@ class AirOdorFan(FanEntity):
             with self._open_serial_connection() as ser:
                 ser.readall()  # flush any stale bytes before sending
                 ser.write(values)
-                response = ser.read(response_length)
+                sleep(SERIAL_POST_WRITE_DELAY_SECONDS)
+
+                response = bytearray()
+                deadline = monotonic() + SERIAL_READ_DEADLINE_SECONDS
+                while len(response) < response_length and monotonic() < deadline:
+                    chunk = ser.read(response_length - len(response))
+                    if not chunk:
+                        continue
+                    response.extend(chunk)
+
                 if len(response) < response_length:
                     LOGGER.debug(
-                        "AirOdorFan %s short response (%d/%d bytes), retrying once",
+                        "AirOdorFan %s short response after retries (%d/%d bytes)",
                         operation,
                         len(response),
                         response_length,
                     )
-                    response += ser.read(response_length - len(response))
         except (OSError, serialx.SerialException) as err:
             self._attr_available = False
             LOGGER.warning(
@@ -129,17 +144,40 @@ class AirOdorFan(FanEntity):
             )
             return None
 
-        return response
+        return bytes(response)
 
-    def _has_valid_response(self, response: bytes | None, operation: str) -> bool:
+    def _has_valid_response(
+        self,
+        response: bytes | None,
+        operation: str,
+        expected_length: int,
+    ) -> bool:
         """Validate the response returned by the device."""
-        if response is None or len(response) <= SERIAL_RESPONSE_INDEX:
+        if response is None:
             LOGGER.warning(
-                "AirOdorFan %s failed. Device response too short: %s",
+                "AirOdorFan %s failed. Device response is missing.",
+                operation,
+            )
+            return False
+
+        if len(response) < expected_length:
+            LOGGER.warning(
+                "AirOdorFan %s failed. Incomplete device frame (%d/%d bytes): %s",
+                operation,
+                len(response),
+                expected_length,
+                response,
+            )
+            return False
+
+        if len(response) <= SERIAL_RESPONSE_INDEX:
+            LOGGER.warning(
+                "AirOdorFan %s failed. Device response too short for command index: %s",
                 operation,
                 response,
             )
             return False
+
         return True
 
     @staticmethod
@@ -181,7 +219,11 @@ class AirOdorFan(FanEntity):
             SERIAL_RESPONSE_LENGTH_SET,
         )
 
-        if not self._has_valid_response(response, "send_serial_command"):
+        if not self._has_valid_response(
+            response,
+            "send_serial_command",
+            SERIAL_RESPONSE_LENGTH_SET,
+        ):
             return False
 
         response_command = response[SERIAL_RESPONSE_INDEX]
@@ -214,11 +256,11 @@ class AirOdorFan(FanEntity):
         self.update()
         self.schedule_update_ha_state()
 
-    def update(self) -> None:
-        """Poll current state of the device and updates HA state."""
+    def _update_from_device(self) -> bool:
+        """Read and apply the current device state. Returns True on success."""
         response = self._send_command(STATUS_COMMAND, "update")
-        if not self._has_valid_response(response, "update"):
-            return
+        if not self._has_valid_response(response, "update", SERIAL_RESPONSE_LENGTH_STATUS):
+            return False
 
         response_command = response[SERIAL_RESPONSE_INDEX]
         mode_and_percentage = binary_to_mode_and_percentage(response_command)
@@ -228,7 +270,7 @@ class AirOdorFan(FanEntity):
                 "AirOdorFan update failed. Unknown device response command: %s",
                 response_command,
             )
-            return
+            return False
 
         LOGGER.debug(
             "AirOdorFan update decoded state: command=0x%02X preset_mode=%s percentage=%s",
@@ -239,16 +281,20 @@ class AirOdorFan(FanEntity):
         self._percentage = mode_and_percentage["percentage"]
         self._preset_mode = mode_and_percentage["preset_mode"]
         self._attr_available = True
+        return True
+
+    def update(self) -> None:
+        """Poll current state of the device and updates HA state."""
+        self._update_from_device()
 
     def set_percentage(self, percentage: int) -> None:
         """Set the speed of the fan, as a percentage. AirOdor only supports 40, 55 and 100%."""
         value = self._normalize_percentage(percentage)
         if self.send_serial_command(value, self._preset_mode):
-            # Read back the applied state from the device so UI reflects device truth.
-            self.update()
-            # Fallback to optimistic local value if the immediate readback failed.
-            if self._percentage is None:
-                self._percentage = value
+            # Optimistically apply written state so UI updates immediately.
+            self._percentage = value
+            # Read back from the device; keep optimistic state if readback fails.
+            self._update_from_device()
             self.schedule_update_ha_state()
             return
 
@@ -276,11 +322,10 @@ class AirOdorFan(FanEntity):
                 return
 
             if self.send_serial_command(self._percentage, preset_mode):
-                # Read back the applied state from the device so UI reflects device truth.
-                self.update()
-                # Fallback to optimistic local value if the immediate readback failed.
-                if self._preset_mode is None:
-                    self._preset_mode = preset_mode
+                # Optimistically apply written state so UI updates immediately.
+                self._preset_mode = preset_mode
+                # Read back from the device; keep optimistic state if readback fails.
+                self._update_from_device()
                 self.schedule_update_ha_state()
                 return
 
