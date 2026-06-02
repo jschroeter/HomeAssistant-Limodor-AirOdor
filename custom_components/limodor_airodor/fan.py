@@ -216,7 +216,6 @@ class AirOdorFan(FanEntity):
 
             if self.send_serial_command(self._percentage, preset_mode):
                 self._preset_mode = preset_mode
-            self._preset_mode = preset_mode
             self.schedule_update_ha_state()
         else:
             raise ValueError(f"Invalid preset mode: {preset_mode}")
