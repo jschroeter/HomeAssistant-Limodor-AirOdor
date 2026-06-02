@@ -2,17 +2,8 @@
     "config": {
         "step": {
             "user": {
-                "description": "If you need help with the configuration, please refer to this integration's documentation.",
-                "data": {
-                    "username": "Username",
-                    "password": "Password"
-                }
+                "description": "If you need help with the configuration, please refer to this integration's documentation."
             }
-        },
-        "error": {
-            "auth": "Username/Password is wrong.",
-            "connection": "Unable to connect to the server.",
-            "unknown": "Unknown error occurred."
         }
     },
     "entity": {
