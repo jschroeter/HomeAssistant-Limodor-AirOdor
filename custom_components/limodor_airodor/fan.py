@@ -2,7 +2,7 @@
 from __future__ import annotations
 from typing import Any
 
-import serial
+import serialx
 
 from homeassistant.components.fan import FanEntity, FanEntityFeature
 from homeassistant.core import HomeAssistant
@@ -84,20 +84,19 @@ class AirOdorFan(FanEntity):
 
         binary_command = mode_and_percentage_to_binary(preset_mode, percentage)
 
-        ser = serial.Serial(
-            "/dev/ttyUSB0",
-            9600,
-            serial.EIGHTBITS,
-            serial.PARITY_NONE,
-            serial.STOPBITS_ONE,
-            1,
-        )
         values = bytearray(
             [0x02, 0x05, 0x16, 0x00, binary_command, binary_command, 0x11]
         )
-        ser.write(values)
-        response = ser.read(11)
-        ser.close()
+        with serialx.serial_for_url(
+            "/dev/ttyUSB0",
+            baudrate=9600,
+            byte_size=8,
+            parity=serialx.Parity.NONE,
+            stopbits=serialx.StopBits.ONE,
+            read_timeout=1,
+        ) as ser:
+            ser.write(values)
+            response = ser.read(11)
 
         response_command = response[4]
         if response_command != binary_command:
@@ -112,18 +111,17 @@ class AirOdorFan(FanEntity):
 
     def update(self) -> None:
         """Poll current state of the device and updates HA state."""
-        ser = serial.Serial(
-            "/dev/ttyUSB0",
-            9600,
-            serial.EIGHTBITS,
-            serial.PARITY_NONE,
-            serial.STOPBITS_ONE,
-            1,
-        )
         values = bytearray([0x02, 0x02, 0x96, 0x96])
-        ser.write(values)
-        response = ser.read(11)
-        ser.close()
+        with serialx.serial_for_url(
+            "/dev/ttyUSB0",
+            baudrate=9600,
+            byte_size=8,
+            parity=serialx.Parity.NONE,
+            stopbits=serialx.StopBits.ONE,
+            read_timeout=1,
+        ) as ser:
+            ser.write(values)
+            response = ser.read(11)
 
         if response is not None:
             mode_and_percentage = binary_to_mode_and_percentage(response[4])
