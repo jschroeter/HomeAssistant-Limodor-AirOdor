@@ -11,7 +11,7 @@ CONF_SERIAL_DEVICE = "Serial device"
 
 BINARY_COMMAND_MAP = {
     "heat_recovery": [0x01, 0x02, 0x04],  # 40, 55 and 100% speed
-    "summer_ventilation": [None, 0x08, 0x10],  # doesn't support 40%
+    "summer_bypass": [None, 0x08, 0x10],  # doesn't support 40%
     "only_air_in": [None, 0x20, 0x40],  # doesn't support 40%
 }
 

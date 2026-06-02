@@ -2,7 +2,7 @@
     "config": {
         "step": {
             "user": {
-                "description": "If you need help with the configuration, please refer to this integration's documentation."
+                "description": "Falls du Hilfe bei der Konfiguration benötigst, schaue in die Dokumentation dieser Integration."
             }
         }
     },
@@ -12,9 +12,9 @@
                 "state_attributes": {
                     "preset_mode": {
                         "state": {
-                            "heat_recovery": "Heat recovery",
-                            "summer_bypass": "Summer bypass",
-                            "only_air_in": "Only air in"
+                            "heat_recovery": "Wärmerückgewinnung",
+                            "summer_bypass": "Sommerbypass",
+                            "only_air_in": "Nur Luft rein"
                         }
                     }
                 }
