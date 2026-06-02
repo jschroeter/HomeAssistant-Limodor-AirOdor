@@ -103,7 +103,7 @@ class AirOdorFan(FanEntity):
             with self._open_serial_connection() as ser:
                 ser.write(values)
                 response = ser.read(SERIAL_RESPONSE_LENGTH)
-        except Exception as err:  # pylint: disable=broad-except
+        except (OSError, TimeoutError, serialx.SerialException) as err:
             self._attr_available = False
             LOGGER.warning(
                 "AirOdorFan %s failed. Serial communication error: %s",
@@ -194,7 +194,10 @@ class AirOdorFan(FanEntity):
         value = self._normalize_percentage(percentage)
         if self.send_serial_command(value, self._preset_mode):
             self._percentage = value
-        self.schedule_update_ha_state()
+            self.schedule_update_ha_state()
+            return
+
+        self.update()
 
     @property
     def preset_mode(self) -> str | None:
@@ -216,7 +219,10 @@ class AirOdorFan(FanEntity):
 
             if self.send_serial_command(self._percentage, preset_mode):
                 self._preset_mode = preset_mode
-            self.schedule_update_ha_state()
+                self.schedule_update_ha_state()
+                return
+
+            self.update()
         else:
             raise ValueError(f"Invalid preset mode: {preset_mode}")
 
