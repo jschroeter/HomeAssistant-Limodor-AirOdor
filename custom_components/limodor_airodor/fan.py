@@ -66,6 +66,7 @@ class AirOdorFan(FanEntity):
         """Init the AirOdorFan."""
         self._unique_id = "fan"
         self._attr_name = "LIMODOR AirOdor"
+        self._attr_translation_key = "limodor_airodor"
         self._attr_supported_features = (
             FanEntityFeature.SET_SPEED
             | FanEntityFeature.PRESET_MODE

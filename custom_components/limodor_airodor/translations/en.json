@@ -14,5 +14,20 @@
             "connection": "Unable to connect to the server.",
             "unknown": "Unknown error occurred."
         }
+    },
+    "entity": {
+        "fan": {
+            "limodor_airodor": {
+                "state_attributes": {
+                    "preset_mode": {
+                        "state": {
+                            "heat_recovery": "Heat recovery",
+                            "summer_bypass": "Summer bypass",
+                            "only_air_in": "Only air in"
+                        }
+                    }
+                }
+            }
+        }
     }
 }
