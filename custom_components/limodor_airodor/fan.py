@@ -212,7 +212,7 @@ class AirOdorFan(FanEntity):
     def set_preset_mode(self, preset_mode: str) -> None:
         """Set new preset mode."""
         if self.preset_modes and preset_mode in self.preset_modes:
-            if self._percentage in (None, 0):
+            if not self._percentage:
                 self._preset_mode = preset_mode
                 self.schedule_update_ha_state()
                 return
