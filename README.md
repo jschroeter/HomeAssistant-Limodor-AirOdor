@@ -11,8 +11,7 @@ _Integration to control multiple [AirOdor][limodor_airodor] home ventilation fan
 
 **STILL WORK IN PROGRESS**
 
-- error handling
-- improve code, e.g. reduce repetitions
+Initial serial communication error handling and command refactoring are in place, but the integration is still evolving.
 
 **This integration will set up the following platforms.**
 
