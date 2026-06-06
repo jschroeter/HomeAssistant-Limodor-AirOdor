@@ -291,10 +291,8 @@ class AirOdorFan(FanEntity):
         """Set the speed of the fan, as a percentage. AirOdor only supports 40, 55 and 100%."""
         value = self._normalize_percentage(percentage)
         if self.send_serial_command(value, self._preset_mode):
-            # Optimistically apply written state so UI updates immediately.
+            # Apply confirmed written state so UI updates immediately.
             self._percentage = value
-            # Read back from the device; keep optimistic state if readback fails.
-            self._update_from_device()
             self.schedule_update_ha_state()
             return
 
@@ -322,10 +320,8 @@ class AirOdorFan(FanEntity):
                 return
 
             if self.send_serial_command(self._percentage, preset_mode):
-                # Optimistically apply written state so UI updates immediately.
+                # Apply confirmed written state so UI updates immediately.
                 self._preset_mode = preset_mode
-                # Read back from the device; keep optimistic state if readback fails.
-                self._update_from_device()
                 self.schedule_update_ha_state()
                 return
 
