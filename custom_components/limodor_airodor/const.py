@@ -5,7 +5,6 @@ LOGGER: Logger = getLogger(__package__)
 
 NAME = "LIMODOR AirOdor"
 DOMAIN = "limodor_airodor"
-VERSION = "0.0.0"
 ATTRIBUTION = ""
 CONF_SERIAL_DEVICE = "Serial device"
 
@@ -18,6 +17,21 @@ BINARY_COMMAND_MAP = {
 PRESET_MODES = list(BINARY_COMMAND_MAP.keys())
 
 SPEED_INDEX_PERCENTAGE = [40, 55, 100]
+
+# Supported named fan speeds (off is represented by percentage 0).
+ORDERED_NAMED_FAN_SPEEDS = ["quiet", "normal", "max"]
+
+# Serial protocol frame details.
+SERIAL_RESPONSE_INDEX = 4
+# STATUS returns 9 bytes (fan off) or 11 bytes (fan on); read the minimum reliable length.
+SERIAL_RESPONSE_LENGTH_STATUS = 9
+# SET commands are echoed back as exactly 7 bytes.
+SERIAL_RESPONSE_LENGTH_SET = 7
+# Give the device a brief moment before starting reads after a write.
+SERIAL_POST_WRITE_DELAY_SECONDS = 0.05
+# Total time budget for collecting a full response frame.
+SERIAL_READ_DEADLINE_SECONDS = 3.0
+STATUS_COMMAND = bytearray([0x02, 0x02, 0x96, 0x96])
 
 
 def binary_to_mode_and_percentage(binary_command):

@@ -15,22 +15,17 @@ from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 from .const import (
     CONF_SERIAL_DEVICE,
     LOGGER,
+    ORDERED_NAMED_FAN_SPEEDS,
     PRESET_MODES,
+    SERIAL_POST_WRITE_DELAY_SECONDS,
+    SERIAL_READ_DEADLINE_SECONDS,
+    SERIAL_RESPONSE_INDEX,
+    SERIAL_RESPONSE_LENGTH_SET,
+    SERIAL_RESPONSE_LENGTH_STATUS,
+    STATUS_COMMAND,
     binary_to_mode_and_percentage,
     mode_and_percentage_to_binary,
 )
-
-ORDERED_NAMED_FAN_SPEEDS = ["quiet", "normal", "max"]  # off is not included
-SERIAL_RESPONSE_INDEX = 4
-# STATUS returns 9 bytes (fan off) or 11 bytes (fan on); read the minimum reliable length.
-SERIAL_RESPONSE_LENGTH_STATUS = 9
-# SET commands are echoed back as exactly 7 bytes.
-SERIAL_RESPONSE_LENGTH_SET = 7
-# Give the device a brief moment before starting reads after a write.
-SERIAL_POST_WRITE_DELAY_SECONDS = 0.05
-# Total time budget for collecting a full response frame.
-SERIAL_READ_DEADLINE_SECONDS = 3.0
-STATUS_COMMAND = bytearray([0x02, 0x02, 0x96, 0x96])
 
 
 async def async_setup_platform(
@@ -39,8 +34,11 @@ async def async_setup_platform(
     async_add_entities: AddEntitiesCallback,
     discovery_info: DiscoveryInfoType | None = None,
 ) -> None:
-    """Platform setup."""
-    async_add_entities([AirOdorFan("/dev/ttyUSB0")], update_before_add=True)
+    """YAML platform setup is not supported; use config flow entries."""
+    LOGGER.warning(
+        "LIMODOR AirOdor YAML setup is unsupported. Configure via integration UI."
+    )
+    return
 
 
 async def async_setup_entry(
