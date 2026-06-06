@@ -40,7 +40,7 @@ async def async_setup_platform(
     discovery_info: DiscoveryInfoType | None = None,
 ) -> None:
     """Platform setup."""
-    async_add_entities([AirOdorFan("/dev/ttyUSB0")])
+    async_add_entities([AirOdorFan("/dev/ttyUSB0")], update_before_add=True)
 
 
 async def async_setup_entry(
@@ -50,7 +50,7 @@ async def async_setup_entry(
 ) -> None:
     """Entry setup."""
     serial_device = config_entry.data[CONF_SERIAL_DEVICE]
-    async_add_entities([AirOdorFan(serial_device)])
+    async_add_entities([AirOdorFan(serial_device)], update_before_add=True)
 
 
 class AirOdorFan(FanEntity):
