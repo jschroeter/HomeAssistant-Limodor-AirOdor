@@ -2,13 +2,15 @@
 from __future__ import annotations
 
 import hashlib
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from homeassistant.components.fan import FanEntity, FanEntityFeature
-from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
+
+if TYPE_CHECKING:
+    from homeassistant.config_entries import ConfigEntry
+    from homeassistant.core import HomeAssistant
+    from homeassistant.helpers.entity_platform import AddEntitiesCallback
+    from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 
 from .client import AirOdorClient
 from .const import (
@@ -20,20 +22,19 @@ from .const import (
 
 
 async def async_setup_platform(
-    hass: HomeAssistant,
-    config: ConfigType,
-    async_add_entities: AddEntitiesCallback,
-    discovery_info: DiscoveryInfoType | None = None,
+    _hass: HomeAssistant,
+    _config: ConfigType,
+    _async_add_entities: AddEntitiesCallback,
+    _discovery_info: DiscoveryInfoType | None = None,
 ) -> None:
     """YAML platform setup is not supported; use config flow entries."""
     LOGGER.warning(
         "LIMODOR AirOdor YAML setup is unsupported. Configure via integration UI."
     )
-    return
 
 
 async def async_setup_entry(
-    hass: HomeAssistant,
+    _hass: HomeAssistant,
     config_entry: ConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
@@ -46,6 +47,10 @@ class AirOdorFan(FanEntity):
     """AirOdor entity based on the FanEntity."""
 
     _attr_available = True
+    _LOW_SPEED_PERCENTAGE = 40
+    _MIDDLE_THRESHOLD_PERCENTAGE = 66
+    _NORMAL_SPEED_PERCENTAGE = 55
+    _HIGH_SPEED_PERCENTAGE = 100
 
     @property
     def unique_id(self) -> str:
@@ -71,7 +76,10 @@ class AirOdorFan(FanEntity):
         """Init the AirOdorFan."""
         self._serial_device = serial_device
         self._client = AirOdorClient(serial_device)
-        device_hash = hashlib.sha1(serial_device.encode("utf-8")).hexdigest()[:12]
+        device_hash = hashlib.blake2s(
+            serial_device.encode("utf-8"),
+            digest_size=6,
+        ).hexdigest()
         self._unique_id = f"fan_{device_hash}"
         self._attr_name = "LIMODOR AirOdor"
         self._attr_translation_key = "limodor_airodor"
@@ -91,11 +99,11 @@ class AirOdorFan(FanEntity):
         """Map Home Assistant percentages to supported device percentages."""
         if percentage <= 0:
             return 0
-        if percentage <= 40:
-            return 40
-        if percentage <= 66:
-            return 55
-        return 100
+        if percentage <= AirOdorFan._LOW_SPEED_PERCENTAGE:
+            return AirOdorFan._LOW_SPEED_PERCENTAGE
+        if percentage <= AirOdorFan._MIDDLE_THRESHOLD_PERCENTAGE:
+            return AirOdorFan._NORMAL_SPEED_PERCENTAGE
+        return AirOdorFan._HIGH_SPEED_PERCENTAGE
 
     def _refresh_state_after_failed_command(self, operation: str) -> None:
         """Refresh the entity state after a failed write command."""
@@ -123,7 +131,11 @@ class AirOdorFan(FanEntity):
         self._update_from_device()
 
     def set_percentage(self, percentage: int) -> None:
-        """Set the speed of the fan, as a percentage. AirOdor only supports 40, 55 and 100%."""
+        """
+        Set fan speed percentage.
+
+        AirOdor only supports 40, 55, and 100 percent.
+        """
         value = self._normalize_percentage(percentage)
         if self._client.send_serial_command(value, self._preset_mode):
             self._attr_available = True
@@ -150,7 +162,8 @@ class AirOdorFan(FanEntity):
         if self.preset_modes and preset_mode in self.preset_modes:
             if self._percentage is None or self._percentage == 0:
                 LOGGER.info(
-                    "AirOdorFan set_preset_mode while off. Preset will apply on the next speed change."
+                    "AirOdorFan set_preset_mode while off. "
+                    "Preset will apply on the next speed change."
                 )
                 self._preset_mode = preset_mode
                 self.schedule_update_ha_state()
@@ -166,21 +179,23 @@ class AirOdorFan(FanEntity):
             self._attr_available = False
             self._refresh_state_after_failed_command("set_preset_mode")
         else:
-            raise ValueError(f"Invalid preset mode: {preset_mode}")
+            msg = f"Invalid preset mode: {preset_mode}"
+            raise ValueError(msg)
 
     def turn_on(
         self,
         percentage: int | None = None,
         preset_mode: str | None = None,
-        **kwargs: Any,
+        **_kwargs: Any,
     ) -> None:
         """Turn on the fan."""
-
+        if preset_mode is not None:
+            self.set_preset_mode(preset_mode)
         if percentage is None:
-            percentage = 55
+            percentage = AirOdorFan._NORMAL_SPEED_PERCENTAGE
 
         self.set_percentage(percentage)
 
-    def turn_off(self, **kwargs: Any) -> None:
+    def turn_off(self, **_kwargs: Any) -> None:
         """Turn off the fan."""
         self.set_percentage(0)

@@ -5,7 +5,7 @@ import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.helpers import selector
 
-from .const import DOMAIN, CONF_SERIAL_DEVICE
+from .const import CONF_SERIAL_DEVICE, DOMAIN
 
 
 class LimodorAirOdorFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):

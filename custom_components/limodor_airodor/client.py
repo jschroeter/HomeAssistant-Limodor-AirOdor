@@ -25,7 +25,7 @@ class AirOdorClient:
         """Initialize the client for a specific serial device path."""
         self._serial_device = serial_device
 
-    def _open_serial_connection(self):
+    def _open_serial_connection(self) -> serialx.Serial:
         """Create the serial connection for the device."""
         return serialx.serial_for_url(
             self._serial_device,
@@ -100,7 +100,10 @@ class AirOdorClient:
 
         if len(response) <= SERIAL_RESPONSE_INDEX:
             LOGGER.warning(
-                "AirOdorClient %s failed. Device response too short for command index: %s",
+                (
+                    "AirOdorClient %s failed. "
+                    "Device response too short for command index: %s"
+                ),
                 operation,
                 response,
             )
@@ -149,7 +152,10 @@ class AirOdorClient:
             return False
 
         LOGGER.debug(
-            "AirOdorClient send_serial_command decoded write: command=0x%02X preset_mode=%s percentage=%s response_len=%d",
+            (
+                "AirOdorClient send_serial_command decoded write: "
+                "command=0x%02X preset_mode=%s percentage=%s response_len=%d"
+            ),
             binary_command,
             preset_mode,
             percentage,
@@ -161,7 +167,11 @@ class AirOdorClient:
     def read_state(self) -> dict[str, str | int] | None:
         """Read and decode the current device state."""
         response = self._send_command(STATUS_COMMAND, "update")
-        if not self._has_valid_response(response, "update", SERIAL_RESPONSE_LENGTH_STATUS):
+        if not self._has_valid_response(
+            response,
+            "update",
+            SERIAL_RESPONSE_LENGTH_STATUS,
+        ):
             return None
 
         response_command = response[SERIAL_RESPONSE_INDEX]
@@ -174,7 +184,10 @@ class AirOdorClient:
             return None
 
         LOGGER.debug(
-            "AirOdorClient update decoded state: command=0x%02X preset_mode=%s percentage=%s",
+            (
+                "AirOdorClient update decoded state: "
+                "command=0x%02X preset_mode=%s percentage=%s"
+            ),
             response_command,
             mode_and_percentage["preset_mode"],
             mode_and_percentage["percentage"],

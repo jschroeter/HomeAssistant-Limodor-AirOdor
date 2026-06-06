@@ -1,5 +1,6 @@
 """Constants for limodor_airodor."""
 from logging import Logger, getLogger
+from typing import Any
 
 LOGGER: Logger = getLogger(__package__)
 
@@ -23,7 +24,8 @@ ORDERED_NAMED_FAN_SPEEDS = ["quiet", "normal", "max"]
 
 # Serial protocol frame details.
 SERIAL_RESPONSE_INDEX = 4
-# STATUS returns 9 bytes (fan off) or 11 bytes (fan on); read the minimum reliable length.
+# STATUS returns 9 bytes (fan off) or 11 bytes (fan on).
+# Read the minimum reliable length.
 SERIAL_RESPONSE_LENGTH_STATUS = 9
 # SET commands are echoed back as exactly 7 bytes.
 SERIAL_RESPONSE_LENGTH_SET = 7
@@ -32,11 +34,12 @@ SERIAL_POST_WRITE_DELAY_SECONDS = 0.05
 # Total time budget for collecting a full response frame.
 SERIAL_READ_DEADLINE_SECONDS = 3.0
 STATUS_COMMAND = bytearray([0x02, 0x02, 0x96, 0x96])
+OFF_BINARY_COMMAND = 0x80
 
 
-def binary_to_mode_and_percentage(binary_command):
+def binary_to_mode_and_percentage(binary_command: int) -> dict[str, Any] | None:
     """Convert binary command to preset_mode and speed percentage."""
-    if binary_command == 0x80:
+    if binary_command == OFF_BINARY_COMMAND:
         return {"preset_mode": PRESET_MODES[0], "percentage": 0}
 
     index = None
@@ -52,11 +55,13 @@ def binary_to_mode_and_percentage(binary_command):
     if index is not None:
         return {"preset_mode": preset_mode, "percentage": SPEED_INDEX_PERCENTAGE[index]}
 
+    return None
 
-def mode_and_percentage_to_binary(mode, percentage):
+
+def mode_and_percentage_to_binary(mode: str, percentage: int) -> int | None:
     """Convert preset_mode and speed percentage to binary command."""
     if percentage == 0:
-        return 0x80
+        return OFF_BINARY_COMMAND
 
     speed_index = SPEED_INDEX_PERCENTAGE.index(percentage)
     return BINARY_COMMAND_MAP[mode][speed_index]

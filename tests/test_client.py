@@ -9,7 +9,7 @@ import serialx
 
 pytest.importorskip("homeassistant")
 
-from custom_components.limodor_airodor.client import AirOdorClient  # noqa: E402
+from custom_components.limodor_airodor.client import AirOdorClient
 
 
 @dataclass

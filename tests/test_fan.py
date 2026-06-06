@@ -8,7 +8,7 @@ import pytest
 
 pytest.importorskip("homeassistant")
 
-from custom_components.limodor_airodor.fan import AirOdorFan  # noqa: E402
+from custom_components.limodor_airodor.fan import AirOdorFan
 
 
 def test_update_from_device_applies_client_state() -> None:
