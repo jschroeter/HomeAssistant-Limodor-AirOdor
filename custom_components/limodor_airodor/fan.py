@@ -1,3 +1,4 @@
+# Copyright (c) 2024 jschroeter
 """Platform for fan integration."""
 from __future__ import annotations
 

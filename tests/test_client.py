@@ -1,3 +1,4 @@
+# Copyright (c) 2024 jschroeter
 """Unit tests for serial client behavior."""
 
 from __future__ import annotations

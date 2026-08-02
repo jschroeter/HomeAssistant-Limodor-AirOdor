@@ -1,3 +1,4 @@
+# Copyright (c) 2024 jschroeter
 """Serial client for LIMODOR AirOdor device communication."""
 from __future__ import annotations
 

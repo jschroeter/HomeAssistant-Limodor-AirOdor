@@ -1,3 +1,4 @@
+# Copyright (c) 2024 jschroeter
 """Constants for limodor_airodor."""
 from logging import Logger, getLogger
 from typing import Any
