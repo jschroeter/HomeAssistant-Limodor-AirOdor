@@ -1,3 +1,4 @@
+# Copyright (c) 2024 jschroeter
 """Unit tests for fan entity behavior with mocked serial client."""
 
 from __future__ import annotations

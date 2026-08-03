@@ -1,3 +1,4 @@
+# Copyright (c) 2024 jschroeter
 """Adds config flow for limodor_airodor."""
 from __future__ import annotations
 

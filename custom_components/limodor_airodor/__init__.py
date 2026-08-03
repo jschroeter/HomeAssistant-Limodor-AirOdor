@@ -1,3 +1,4 @@
+# Copyright (c) 2024 jschroeter
 """
 Custom integration to integrate LIMODOR AirOdor with Home Assistant.
 
